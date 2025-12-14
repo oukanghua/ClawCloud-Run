@@ -2,14 +2,13 @@ name: ClawCloud 自动登录保活
 
 on:
   schedule:
-    # 每5天运行一次 (UTC 时间早上6点 = 北京时间下午2点)
     - cron: '0 6 */5 * *'
   workflow_dispatch:
 
 jobs:
   auto-login:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     
     steps:
       - name: 检出代码
@@ -22,7 +21,7 @@ jobs:
 
       - name: 安装依赖
         run: |
-          pip install playwright requests
+          pip install playwright requests PyNaCl
           playwright install chromium
           playwright install-deps
 
@@ -30,8 +29,11 @@ jobs:
         env:
           GH_USERNAME: ${{ secrets.GH_USERNAME }}
           GH_PASSWORD: ${{ secrets.GH_PASSWORD }}
+          GH_SESSION: ${{ secrets.GH_SESSION }}
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+          REPO_TOKEN: ${{ secrets.REPO_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: python scripts/auto_login.py
 
       - name: 上传截图
@@ -39,8 +41,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: 截图-${{ github.run_number }}
-          path: |
-            *.png
-            *.json
+          path: "*.png"
           retention-days: 7
           if-no-files-found: ignore
